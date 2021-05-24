@@ -56,6 +56,7 @@ private:
 	BitmapClass* m_Bitmap;
 
 	TextClass* m_Text;
+	int modelCount;
 };
 
 #endif

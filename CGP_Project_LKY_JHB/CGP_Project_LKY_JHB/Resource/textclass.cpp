@@ -74,13 +74,6 @@ bool TextClass::Initialize(ID3D11Device* device, ID3D11DeviceContext* deviceCont
 		return false;
 	}
 
-	// Now update the sentence vertex buffer with the new string information.
-	result = UpdateSentence(m_sentence1, (char *)"Hello", 100, 100, 1.0f, 1.0f, 1.0f, deviceContext);
-	if(!result)
-	{
-		return false;
-	}
-
 	// Initialize the first sentence.
 	result = InitializeSentence(&m_sentence2, 16, device);
 	if(!result)
@@ -88,9 +81,20 @@ bool TextClass::Initialize(ID3D11Device* device, ID3D11DeviceContext* deviceCont
 		return false;
 	}
 
-	// Now update the sentence vertex buffer with the new string information.
-	result = UpdateSentence(m_sentence2, (char *)"Goodbye", 100, 200, 1.0f, 1.0f, 0.0f, deviceContext);
-	if(!result)
+	result = InitializeSentence(&m_sentence3, 32, device);
+	if (!result)
+	{
+		return false;
+	}
+
+	result = InitializeSentence(&m_sentence4, 32, device);
+	if (!result)
+	{
+		return false;
+	}
+
+	result = InitializeSentence(&m_sentence5, 32, device);
+	if (!result)
 	{
 		return false;
 	}
@@ -106,6 +110,10 @@ void TextClass::Shutdown()
 
 	// Release the second sentence.
 	ReleaseSentence(&m_sentence2);
+
+	ReleaseSentence(&m_sentence3);
+	ReleaseSentence(&m_sentence4);
+	ReleaseSentence(&m_sentence5);
 
 	// Release the font shader object.
 	if(m_FontShader)
@@ -142,6 +150,24 @@ bool TextClass::Render(ID3D11DeviceContext* deviceContext, D3DXMATRIX worldMatri
 	// Draw the second sentence.
 	result = RenderSentence(deviceContext, m_sentence2, worldMatrix, orthoMatrix);
 	if(!result)
+	{
+		return false;
+	}
+
+	result = RenderSentence(deviceContext, m_sentence3, worldMatrix, orthoMatrix);
+	if (!result)
+	{
+		return false;
+	}
+
+	result = RenderSentence(deviceContext, m_sentence4, worldMatrix, orthoMatrix);
+	if (!result)
+	{
+		return false;
+	}
+
+	result = RenderSentence(deviceContext, m_sentence5, worldMatrix, orthoMatrix);
+	if (!result)
 	{
 		return false;
 	}
@@ -493,6 +519,70 @@ bool TextClass::SetCpu(int cpu, ID3D11DeviceContext* deviceContext)
 
 	// Update the sentence vertex buffer with the new string information.
 	result = UpdateSentence(m_sentence2, cpuString, 20, 40, 0.0f, 1.0f, 0.0f, deviceContext);
+	if (!result)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool TextClass::SetObjNum(int modelCount, ID3D11DeviceContext* deviceContext)
+{
+	char objNumString[32];
+	char modelCountString[16];
+	bool result;
+
+	_itoa_s(modelCount, modelCountString, 10);
+
+	strcpy_s(objNumString, "Num Of Obj: ");
+	strcat_s(objNumString, modelCountString);
+
+	result = UpdateSentence(m_sentence3, objNumString, 20, 60, 0.0f, 1.0f, 0.0f, deviceContext);
+	if (!result)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool TextClass::SetPolygonNum(int polygonCount, ID3D11DeviceContext* deviceContext)
+{
+	char polygonNumString[32];
+	char polygonCountString[16];
+	bool result;
+
+	_itoa_s(polygonCount, polygonCountString, 10);
+
+	strcpy_s(polygonNumString, "Num Of Polygon: ");
+	strcat_s(polygonNumString, polygonCountString);
+
+	result = UpdateSentence(m_sentence4, polygonNumString, 20, 80, 0.0f, 1.0f, 0.0f, deviceContext);
+	if (!result)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool TextClass::SetScreenSize(ID3D11DeviceContext* deviceContext)
+{
+	char screenSizeString[32];
+	char screenWidthString[16];
+	char screenHeightString[16];
+	bool result;
+
+	_itoa_s(m_screenWidth, screenWidthString, 10);
+	_itoa_s(m_screenHeight, screenHeightString, 10);
+
+	strcpy_s(screenSizeString, "Screen Size: ");
+	strcat_s(screenSizeString, screenWidthString);
+	strcat_s(screenSizeString, " * ");
+	strcat_s(screenSizeString, screenHeightString);
+
+	result = UpdateSentence(m_sentence5, screenSizeString, 20, 100, 0.0f, 1.0f, 0.0f, deviceContext);
 	if (!result)
 	{
 		return false;

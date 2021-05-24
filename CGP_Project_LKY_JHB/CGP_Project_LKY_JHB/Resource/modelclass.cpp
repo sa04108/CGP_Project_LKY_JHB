@@ -82,6 +82,10 @@ int ModelClass::GetIndexCount()
 	return m_indexCount;
 }
 
+int ModelClass::GetPolygonCount()
+{
+	return faceCount;
+}
 
 ID3D11ShaderResourceView* ModelClass::GetTexture()
 {

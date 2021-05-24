@@ -62,6 +62,7 @@ public:
 	void Render(ID3D11DeviceContext*);
 
 	int GetIndexCount();
+	int GetPolygonCount();
 	ID3D11ShaderResourceView* GetTexture();
 
 
