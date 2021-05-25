@@ -13,10 +13,15 @@ GraphicsClass::GraphicsClass()
 	m_Light = 0;
 
 	m_TextureShader = 0;
-	m_Bitmap = 0;
+	m_Bitmap_Fuel = 0;
+	m_Bitmap_Fuel_Empty = 0;
+	m_Bitmap_Background = 0;
 
 	m_Text = 0;
+	m_Timer = 0;
 	modelCount = 0;
+	m_startTime = 0;
+	m_second = 0;
 }
 
 
@@ -128,14 +133,44 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 
 
 	// Create the bitmap object.
-	m_Bitmap = new BitmapClass;
-	if (!m_Bitmap)
+	m_Bitmap_Fuel = new BitmapClass;
+	if (!m_Bitmap_Fuel)
 	{
 		return false;
 	}
 
 	// Initialize the bitmap object.
-	result = m_Bitmap->Initialize(m_D3D->GetDevice(), screenWidth, screenHeight, (wchar_t*)L"data/fuel-station.dds", 256, 256);
+	result = m_Bitmap_Fuel->Initialize(m_D3D->GetDevice(), screenWidth, screenHeight, (wchar_t*)L"data/fuel.png", 256, 256);
+	if (!result)
+	{
+		MessageBox(hwnd, L"Could not initialize the bitmap object.", L"Error", MB_OK);
+		return false;
+	}
+
+	// Create the bitmap object.
+	m_Bitmap_Fuel_Empty = new BitmapClass;
+	if (!m_Bitmap_Fuel_Empty)
+	{
+		return false;
+	}
+
+	// Initialize the bitmap object.
+	result = m_Bitmap_Fuel_Empty->Initialize(m_D3D->GetDevice(), screenWidth, screenHeight, (wchar_t*)L"data/fuel_empty.png", 256, 256);
+	if (!result)
+	{
+		MessageBox(hwnd, L"Could not initialize the bitmap object.", L"Error", MB_OK);
+		return false;
+	}
+
+	// Create the bitmap object.
+	m_Bitmap_Background = new BitmapClass;
+	if (!m_Bitmap_Background)
+	{
+		return false;
+	}
+
+	// Initialize the bitmap object.
+	result = m_Bitmap_Background->Initialize(m_D3D->GetDevice(), screenWidth, screenHeight, (wchar_t*)L"data/spacemap.dds", 256, 256);
 	if (!result)
 	{
 		MessageBox(hwnd, L"Could not initialize the bitmap object.", L"Error", MB_OK);
@@ -162,6 +197,21 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 		return false;
 	}
 
+	m_Timer = new TimerClass;
+	if (!m_Timer)
+	{
+		return false;
+	}
+
+	result = m_Timer->Initialize();
+	if (!result)
+	{
+		MessageBox(hwnd, L"Could not initialize the timer.", L"Error", MB_OK);
+		return false;
+	}
+
+	m_startTime = timeGetTime();
+
 	return true;
 }
 
@@ -169,11 +219,27 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 void GraphicsClass::Shutdown()
 {
 	// Release the bitmap object.
-	if (m_Bitmap)
+	if (m_Bitmap_Fuel)
 	{
-		m_Bitmap->Shutdown();
-		delete m_Bitmap;
-		m_Bitmap = 0;
+		m_Bitmap_Fuel->Shutdown();
+		delete m_Bitmap_Fuel;
+		m_Bitmap_Fuel = 0;
+	}
+
+	// Release the bitmap object.
+	if (m_Bitmap_Fuel_Empty)
+	{
+		m_Bitmap_Fuel_Empty->Shutdown();
+		delete m_Bitmap_Fuel_Empty;
+		m_Bitmap_Fuel_Empty = 0;
+	}
+
+	// Release the bitmap object.
+	if (m_Bitmap_Background)
+	{
+		m_Bitmap_Background->Shutdown();
+		delete m_Bitmap_Background;
+		m_Bitmap_Background = 0;
 	}
 
 	// Release the texture shader object.
@@ -228,6 +294,13 @@ void GraphicsClass::Shutdown()
 		m_Text->Shutdown();
 		delete m_Text;
 		m_Text = 0;
+	}
+
+	if (m_Timer)
+	{
+		m_Timer->~TimerClass();
+		delete m_Timer;
+		m_Timer = 0;
 	}
 
 	return;
@@ -309,6 +382,20 @@ bool GraphicsClass::Frame(int fps, int cpu, float frameTime)
 		return false;
 	}
 
+	result = m_Text->SetTime((int)m_Timer->GetTime(), m_D3D->GetDeviceContext());
+	if (!result)
+	{
+		return false;
+	}
+
+	m_Timer->Frame();
+
+	if (timeGetTime() >= (m_startTime + 1000))
+	{
+		m_startTime = timeGetTime();
+		m_second++;
+	}
+
 	// Render the graphics scene.
 	result = Render(rotation);
 	if (!result)
@@ -325,7 +412,7 @@ bool GraphicsClass::Frame(int fps, int cpu, float frameTime)
 bool GraphicsClass::Render(float rotation)
 {
 	D3DXMATRIX worldMatrix, viewMatrix, projectionMatrix, orthoMatrix;
-	D3DXMATRIX rotationMatrix, translationMatrix;
+	D3DXMATRIX rotationMatrix, translationMatrix, scaleMatrix;
 	bool result;
 
 
@@ -345,23 +432,62 @@ bool GraphicsClass::Render(float rotation)
 	// Turn off the Z buffer to begin all 2D rendering.
 	m_D3D->TurnZBufferOff();
 
+#pragma region Background Bitmap
+	D3DXMatrixScaling(&scaleMatrix, 4.0f, 4.0f, 1.0f);
+
 	// Put the bitmap vertex and index buffers on the graphics pipeline to prepare them for drawing.
-	result = m_Bitmap->Render(m_D3D->GetDeviceContext(), 600, 400);
+	result = m_Bitmap_Background->Render(m_D3D->GetDeviceContext(), 300, 400);
 	if (!result)
 	{
 		return false;
 	}
 
 	// Render the bitmap with the texture shader.
-	result = m_TextureShader->Render(m_D3D->GetDeviceContext(), m_Bitmap->GetIndexCount(), worldMatrix, viewMatrix, orthoMatrix, m_Bitmap->GetTexture());
+	result = m_TextureShader->Render(m_D3D->GetDeviceContext(), m_Bitmap_Background->GetIndexCount(), scaleMatrix * worldMatrix, viewMatrix, orthoMatrix, m_Bitmap_Background->GetTexture());
+	if (!result)
+	{
+		return false;
+	}
+#pragma endregion
+
+	// Turn on the alpha blending before rendering the text.
+	m_D3D->TurnOnAlphaBlending();
+
+#pragma region Fuel Empty Bitmap
+	D3DXMatrixScaling(&scaleMatrix, 0.5f, 0.5f, 1.0f);
+
+	// Put the bitmap vertex and index buffers on the graphics pipeline to prepare them for drawing.
+	result = m_Bitmap_Fuel_Empty->Render(m_D3D->GetDeviceContext(), 900, 800);
 	if (!result)
 	{
 		return false;
 	}
 
+	// Render the bitmap with the texture shader.
+	result = m_TextureShader->Render(m_D3D->GetDeviceContext(), m_Bitmap_Fuel_Empty->GetIndexCount(), scaleMatrix * worldMatrix, viewMatrix, orthoMatrix, m_Bitmap_Fuel_Empty->GetTexture());
+	if (!result)
+	{
+		return false;
+	}
+#pragma endregion
 
-	// Turn on the alpha blending before rendering the text.
-	m_D3D->TurnOnAlphaBlending();
+#pragma region Fuel Bitmap
+	D3DXMatrixScaling(&scaleMatrix, 0.5f, 0.5f, 1.0f);
+
+	// Put the bitmap vertex and index buffers on the graphics pipeline to prepare them for drawing.
+	result = m_Bitmap_Fuel->Render(m_D3D->GetDeviceContext(), 900, 800, 0.7f);
+	if (!result)
+	{
+		return false;
+	}
+
+	// Render the bitmap with the texture shader.
+	result = m_TextureShader->Render(m_D3D->GetDeviceContext(), m_Bitmap_Fuel->GetIndexCount(), scaleMatrix * worldMatrix, viewMatrix, orthoMatrix, m_Bitmap_Fuel->GetTexture());
+	if (!result)
+	{
+		return false;
+	}
+#pragma endregion
 
 	// Render the text strings.
 	result = m_Text->Render(m_D3D->GetDeviceContext(), worldMatrix, orthoMatrix);
@@ -376,8 +502,9 @@ bool GraphicsClass::Render(float rotation)
 	// Turn the Z buffer back on now that all 2D rendering has completed.
 	m_D3D->TurnZBufferOn();
 
+
 	// Rotate the world matrix by the rotation value so that the triangle will spin.
-	D3DXMatrixRotationY(&rotationMatrix, rotation);
+	D3DXMatrixRotationX(&rotationMatrix, -rotation);
 
 	D3DXMatrixTranslation(&translationMatrix, 0.0f, 0.0f, 50.0f);
 

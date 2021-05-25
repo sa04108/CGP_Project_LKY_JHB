@@ -69,13 +69,13 @@ void BitmapClass::Shutdown()
 }
 
 
-bool BitmapClass::Render(ID3D11DeviceContext* deviceContext, int positionX, int positionY)
+bool BitmapClass::Render(ID3D11DeviceContext* deviceContext, int positionX, int positionY, float textureY)
 {
 	bool result;
 
 
 	// Re-build the dynamic vertex buffer for rendering to possibly a different location on the screen.
-	result = UpdateBuffers(deviceContext, positionX, positionY);
+	result = UpdateBuffers(deviceContext, positionX, positionY, textureY);
 	if(!result)
 	{
 		return false;
@@ -210,7 +210,7 @@ void BitmapClass::ShutdownBuffers()
 }
 
 
-bool BitmapClass::UpdateBuffers(ID3D11DeviceContext* deviceContext, int positionX, int positionY)
+bool BitmapClass::UpdateBuffers(ID3D11DeviceContext* deviceContext, int positionX, int positionY, float textureY)
 {
 	float left, right, top, bottom;
 	VertexType* vertices;
@@ -237,10 +237,13 @@ bool BitmapClass::UpdateBuffers(ID3D11DeviceContext* deviceContext, int position
 	right = left + (float)m_bitmapWidth;
 
 	// Calculate the screen coordinates of the top of the bitmap.
-	top = (float)(m_screenHeight / 2) - (float)positionY;
+	// top = (float)(m_screenHeight / 2) - (float)positionY;
 
 	// Calculate the screen coordinates of the bottom of the bitmap.
-	bottom = top - (float)m_bitmapHeight;
+	// bottom = top - (float)m_bitmapHeight;
+
+	bottom = (float)(m_screenHeight / 2) - (float)positionY;
+	top = bottom + (float)m_bitmapHeight * (1 - textureY);
 
 	// Create the vertex array.
 	vertices = new VertexType[m_vertexCount];
@@ -252,7 +255,7 @@ bool BitmapClass::UpdateBuffers(ID3D11DeviceContext* deviceContext, int position
 	// Load the vertex array with data.
 	// First triangle.
 	vertices[0].position = D3DXVECTOR3(left, top, 0.0f);  // Top left.
-	vertices[0].texture = D3DXVECTOR2(0.0f, 0.0f);
+	vertices[0].texture = D3DXVECTOR2(0.0f, textureY);
 
 	vertices[1].position = D3DXVECTOR3(right, bottom, 0.0f);  // Bottom right.
 	vertices[1].texture = D3DXVECTOR2(1.0f, 1.0f);
@@ -262,10 +265,10 @@ bool BitmapClass::UpdateBuffers(ID3D11DeviceContext* deviceContext, int position
 
 	// Second triangle.
 	vertices[3].position = D3DXVECTOR3(left, top, 0.0f);  // Top left.
-	vertices[3].texture = D3DXVECTOR2(0.0f, 0.0f);
+	vertices[3].texture = D3DXVECTOR2(0.0f, textureY);
 
 	vertices[4].position = D3DXVECTOR3(right, top, 0.0f);  // Top right.
-	vertices[4].texture = D3DXVECTOR2(1.0f, 0.0f);
+	vertices[4].texture = D3DXVECTOR2(1.0f, textureY);
 
 	vertices[5].position = D3DXVECTOR3(right, bottom, 0.0f);  // Bottom right.
 	vertices[5].texture = D3DXVECTOR2(1.0f, 1.0f);

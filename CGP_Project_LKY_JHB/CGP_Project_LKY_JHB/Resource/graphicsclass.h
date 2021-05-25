@@ -19,6 +19,8 @@
 
 #include "textclass.h"
 
+#include "timerclass.h"
+
 /////////////
 // GLOBALS //
 /////////////
@@ -53,10 +55,16 @@ private:
 	LightClass* m_Light;
 
 	TextureShaderClass* m_TextureShader;
-	BitmapClass* m_Bitmap;
+	BitmapClass* m_Bitmap_Fuel;
+	BitmapClass* m_Bitmap_Fuel_Empty;
+	BitmapClass* m_Bitmap_Background;
 
 	TextClass* m_Text;
+	TimerClass* m_Timer;
+
 	int modelCount;
+	unsigned long m_startTime;
+	int m_second;
 };
 
 #endif

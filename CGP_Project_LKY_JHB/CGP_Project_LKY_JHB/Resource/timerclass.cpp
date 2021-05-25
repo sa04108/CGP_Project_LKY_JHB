@@ -57,5 +57,6 @@ void TimerClass::Frame()
 
 float TimerClass::GetTime()
 {
+	// MS Per 1 Frame
 	return m_frameTime;
 }

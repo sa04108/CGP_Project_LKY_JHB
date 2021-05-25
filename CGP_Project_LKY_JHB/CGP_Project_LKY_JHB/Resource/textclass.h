@@ -44,6 +44,7 @@ public:
 	bool SetObjNum(int, ID3D11DeviceContext*);
 	bool SetPolygonNum(int, ID3D11DeviceContext*);
 	bool SetScreenSize(ID3D11DeviceContext*);
+	bool SetTime(int, ID3D11DeviceContext*);
 
 private:
 	bool InitializeSentence(SentenceType**, int, ID3D11Device*);
@@ -61,6 +62,7 @@ private:
 	SentenceType* m_sentence3;
 	SentenceType* m_sentence4;
 	SentenceType* m_sentence5;
+	SentenceType* m_sentence6;
 };
 
 #endif

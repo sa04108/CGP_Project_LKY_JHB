@@ -11,6 +11,10 @@ TextClass::TextClass()
 
 	m_sentence1 = 0;
 	m_sentence2 = 0;
+	m_sentence3 = 0;
+	m_sentence4 = 0;
+	m_sentence5 = 0;
+	m_sentence6 = 0;
 }
 
 
@@ -99,6 +103,12 @@ bool TextClass::Initialize(ID3D11Device* device, ID3D11DeviceContext* deviceCont
 		return false;
 	}
 
+	result = InitializeSentence(&m_sentence6, 32, device);
+	if (!result)
+	{
+		return false;
+	}
+
 	return true;
 }
 
@@ -114,6 +124,7 @@ void TextClass::Shutdown()
 	ReleaseSentence(&m_sentence3);
 	ReleaseSentence(&m_sentence4);
 	ReleaseSentence(&m_sentence5);
+	ReleaseSentence(&m_sentence6);
 
 	// Release the font shader object.
 	if(m_FontShader)
@@ -167,6 +178,12 @@ bool TextClass::Render(ID3D11DeviceContext* deviceContext, D3DXMATRIX worldMatri
 	}
 
 	result = RenderSentence(deviceContext, m_sentence5, worldMatrix, orthoMatrix);
+	if (!result)
+	{
+		return false;
+	}
+
+	result = RenderSentence(deviceContext, m_sentence6, worldMatrix, orthoMatrix);
 	if (!result)
 	{
 		return false;
@@ -583,6 +600,27 @@ bool TextClass::SetScreenSize(ID3D11DeviceContext* deviceContext)
 	strcat_s(screenSizeString, screenHeightString);
 
 	result = UpdateSentence(m_sentence5, screenSizeString, 20, 100, 0.0f, 1.0f, 0.0f, deviceContext);
+	if (!result)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool TextClass::SetTime(int time, ID3D11DeviceContext* deviceContext)
+{
+	char timeTextString[32];
+	char timeString[32];
+	bool result;
+
+	_itoa_s(time, timeString, 10);
+
+	strcpy_s(timeTextString, "Time Per Frame: ");
+	strcat_s(timeTextString, timeString);
+	strcat_s(timeTextString, " ms");
+
+	result = UpdateSentence(m_sentence6, timeTextString, 20, 120, 0.0f, 1.0f, 0.0f, deviceContext);
 	if (!result)
 	{
 		return false;
