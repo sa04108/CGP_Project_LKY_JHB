@@ -154,6 +154,8 @@ void SystemClass::Run()
 {
 	MSG msg;
 	bool done, result;
+	static float rotationSpeedX = 0.0f;
+	static float rotationSpeedY = 0.0f;
 
 
 	// Initialize the message structure.
@@ -189,6 +191,37 @@ void SystemClass::Run()
 			if (m_Input->IsEscapePressed() == true)
 			{
 				done = true;
+			}
+
+			if (m_Input->IsKeyDown(DIK_W))
+			{
+				if (rotationSpeedY < 0.05f)
+					rotationSpeedY += 0.0005f;
+				m_Graphics->SetRotationSpeedY(rotationSpeedY);
+			}
+
+			if (m_Input->IsKeyDown(DIK_S))
+			{
+				if (rotationSpeedY > 0.0f)
+					rotationSpeedY -= 0.0005f;
+				m_Graphics->SetRotationSpeedY(rotationSpeedY);
+			}
+
+			if (m_Input->IsKeyDown(DIK_A))
+			{
+				rotationSpeedX = -0.05f;
+				m_Graphics->SetRotationSpeedX(rotationSpeedX);
+			}
+
+			else if (m_Input->IsKeyDown(DIK_D))
+			{
+				rotationSpeedX = 0.05f;
+				m_Graphics->SetRotationSpeedX(rotationSpeedX);
+			}
+
+			else
+			{
+				m_Graphics->SetRotationSpeedX(0.0f);
 			}
 
 		}

@@ -45,12 +45,16 @@ public:
 	bool Frame(int, int);
 	bool Frame(int, int, float);
 	bool Render();
-	bool Render(float);
+	bool Render(float, float);
+
+	void SetRotationSpeedX(float);
+	void SetRotationSpeedY(float);
 
 private:
 	D3DClass* m_D3D;
 	CameraClass* m_Camera;
-	ModelClass* m_Model;
+	ModelClass* m_Model_Mars;
+	ModelClass* m_Model_Spaceship;
 	LightShaderClass* m_LightShader;
 	LightClass* m_Light;
 
@@ -65,6 +69,9 @@ private:
 	int modelCount;
 	unsigned long m_startTime;
 	int m_second;
+
+	float rotationSpeedX;
+	float rotationSpeedY;
 };
 
 #endif

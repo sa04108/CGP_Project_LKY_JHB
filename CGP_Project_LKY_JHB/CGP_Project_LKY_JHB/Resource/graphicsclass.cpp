@@ -8,7 +8,8 @@ GraphicsClass::GraphicsClass()
 {
 	m_D3D = 0;
 	m_Camera = 0;
-	m_Model = 0;
+	m_Model_Mars = 0;
+	m_Model_Spaceship = 0;
 	m_LightShader = 0;
 	m_Light = 0;
 
@@ -22,6 +23,9 @@ GraphicsClass::GraphicsClass()
 	modelCount = 0;
 	m_startTime = 0;
 	m_second = 0;
+
+	rotationSpeedX = 0.0f;
+	rotationSpeedY = 0.0f;
 }
 
 
@@ -68,14 +72,14 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 //	m_Camera->SetPosition(0.0f, 0.5f, -3.0f);
 
 	// Create the model object.
-	m_Model = new ModelClass;
-	if(!m_Model)
+	m_Model_Mars = new ModelClass;
+	if(!m_Model_Mars)
 	{
 		return false;
 	}
 
 	// Initialize the model object.
-	result = m_Model->Initialize(m_D3D->GetDevice(), (char *)"data/mars.obj", (wchar_t *)L"data/mars.dds");
+	result = m_Model_Mars->Initialize(m_D3D->GetDevice(), (char *)"data/mars.obj", (wchar_t *)L"data/mars.dds");
 //	result = m_Model->Initialize(m_D3D->GetDevice(), "../Engine/data/chair.txt", L"../Engine/data/chair_d.dds");
 
 	if(!result)
@@ -84,6 +88,23 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 		return false;
 	}
 
+	// Create the model object.
+	m_Model_Spaceship = new ModelClass;
+	if (!m_Model_Spaceship)
+	{
+		return false;
+	}
+
+	// Initialize the model object.
+	result = m_Model_Spaceship->Initialize(m_D3D->GetDevice(), (char*)"data/spaceship.obj", (wchar_t*)L"data/spaceship.dds");
+
+	if (!result)
+	{
+		MessageBox(hwnd, L"Could not initialize the model object.", L"Error", MB_OK);
+		return false;
+	}
+
+	modelCount++;
 	modelCount++;
 
 	// Create the light shader object.
@@ -266,11 +287,19 @@ void GraphicsClass::Shutdown()
 	}
 
 	// Release the model object.
-	if(m_Model)
+	if(m_Model_Mars)
 	{
-		m_Model->Shutdown();
-		delete m_Model;
-		m_Model = 0;
+		m_Model_Mars->Shutdown();
+		delete m_Model_Mars;
+		m_Model_Mars = 0;
+	}
+
+	// Release the model object.
+	if(m_Model_Spaceship)
+	{
+		m_Model_Spaceship->Shutdown();
+		delete m_Model_Spaceship;
+		m_Model_Spaceship = 0;
 	}
 
 	// Release the camera object.
@@ -310,14 +339,14 @@ void GraphicsClass::Shutdown()
 bool GraphicsClass::Frame(int mouseX, int mouseY)
 {
 	bool result;
-	static float rotation = 0.0f;
-
+	static float rotationX = 0.0f;
+	static float rotationY = 0.0f;
 
 	// Update the rotation variable each frame.
-	rotation += (float)D3DX_PI * 0.005f;
-	if(rotation > 360.0f)
+	rotationY += (float)D3DX_PI * 0.005f;
+	if(rotationY > 360.0f)
 	{
-		rotation -= 360.0f;
+		rotationY -= 360.0f;
 	}
 	
 	// Set the location of the mouse.
@@ -328,7 +357,7 @@ bool GraphicsClass::Frame(int mouseX, int mouseY)
 	}
 
 	// Render the graphics scene.
-	result = Render(rotation);
+	result = Render(rotationX, rotationY);
 	if(!result)
 	{
 		return false;
@@ -340,14 +369,15 @@ bool GraphicsClass::Frame(int mouseX, int mouseY)
 bool GraphicsClass::Frame(int fps, int cpu, float frameTime)
 {
 	bool result;
-	static float rotation = 0.0f;
+	static float rotationX = 0.0f;
+	static float rotationY = 0.0f;
 
-
+	rotationX += rotationSpeedX;
 	// Update the rotation variable each frame.
-	rotation += (float)D3DX_PI * 0.005f;
-	if (rotation > 360.0f)
+	rotationY += (float)D3DX_PI * 0.005f + rotationSpeedY;
+	if (rotationY > 360.0f)
 	{
-		rotation -= 360.0f;
+		rotationY -= 360.0f;
 	}
 
 	// Set the frames per second.
@@ -370,7 +400,7 @@ bool GraphicsClass::Frame(int fps, int cpu, float frameTime)
 		return false;
 	}
 
-	result = m_Text->SetPolygonNum(m_Model->GetPolygonCount(), m_D3D->GetDeviceContext());
+	result = m_Text->SetPolygonNum(m_Model_Mars->GetPolygonCount() + m_Model_Spaceship->GetPolygonCount(), m_D3D->GetDeviceContext());
 	if (!result)
 	{
 		return false;
@@ -397,7 +427,7 @@ bool GraphicsClass::Frame(int fps, int cpu, float frameTime)
 	}
 
 	// Render the graphics scene.
-	result = Render(rotation);
+	result = Render(rotationX, rotationY);
 	if (!result)
 	{
 		return false;
@@ -409,7 +439,7 @@ bool GraphicsClass::Frame(int fps, int cpu, float frameTime)
 	return true;
 }
 
-bool GraphicsClass::Render(float rotation)
+bool GraphicsClass::Render(float rotationX, float rotationY)
 {
 	D3DXMATRIX worldMatrix, viewMatrix, projectionMatrix, orthoMatrix;
 	D3DXMATRIX rotationMatrix, translationMatrix, scaleMatrix;
@@ -502,19 +532,34 @@ bool GraphicsClass::Render(float rotation)
 	// Turn the Z buffer back on now that all 2D rendering has completed.
 	m_D3D->TurnZBufferOn();
 
-
+#pragma region Model Mars Rendering
 	// Rotate the world matrix by the rotation value so that the triangle will spin.
-	D3DXMatrixRotationX(&rotationMatrix, -rotation);
-
+	D3DXMatrixRotationYawPitchRoll(&rotationMatrix, rotationX, -rotationY, 0.0f);
 	D3DXMatrixTranslation(&translationMatrix, 0.0f, 0.0f, 50.0f);
 
 	// Put the model vertex and index buffers on the graphics pipeline to prepare them for drawing.
-	m_Model->Render(m_D3D->GetDeviceContext());
+	m_Model_Mars->Render(m_D3D->GetDeviceContext());
 
 	// Render the model using the light shader.
-	result = m_LightShader->Render(m_D3D->GetDeviceContext(), m_Model->GetIndexCount(), rotationMatrix * translationMatrix * worldMatrix, viewMatrix, projectionMatrix, 
-								   m_Model->GetTexture(), m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor(), 
-								   m_Camera->GetPosition(), m_Light->GetSpecularColor(), m_Light->GetSpecularPower());
+	result = m_LightShader->Render(m_D3D->GetDeviceContext(), m_Model_Mars->GetIndexCount(), rotationMatrix * translationMatrix * worldMatrix, viewMatrix, projectionMatrix,
+		m_Model_Mars->GetTexture(), m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor(),
+		m_Camera->GetPosition(), m_Light->GetSpecularColor(), m_Light->GetSpecularPower());
+#pragma endregion
+
+#pragma region Model Spaceship Rendering
+	D3DXMatrixScaling(&scaleMatrix, 0.005f, 0.005f, 0.005f);
+	D3DXMatrixTranslation(&translationMatrix, 0.0f, -300.0f, 0.0f);
+
+	// Put the model vertex and index buffers on the graphics pipeline to prepare them for drawing.
+	m_Model_Spaceship->Render(m_D3D->GetDeviceContext());
+
+	// Render the model using the light shader.
+	result = m_LightShader->Render(m_D3D->GetDeviceContext(), m_Model_Spaceship->GetIndexCount(), translationMatrix * scaleMatrix * worldMatrix, viewMatrix, projectionMatrix,
+		m_Model_Spaceship->GetTexture(), m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor(),
+		m_Camera->GetPosition(), m_Light->GetSpecularColor(), m_Light->GetSpecularPower());
+#pragma endregion
+
+
 	if(!result)
 	{
 		return false;
@@ -524,4 +569,16 @@ bool GraphicsClass::Render(float rotation)
 	m_D3D->EndScene();
 
 	return true;
+}
+
+
+void GraphicsClass::SetRotationSpeedX(float rotationSpeedX)
+{
+	this->rotationSpeedX = rotationSpeedX;
+}
+
+
+void GraphicsClass::SetRotationSpeedY(float rotationSpeedY)
+{
+	this->rotationSpeedY = rotationSpeedY;
 }
