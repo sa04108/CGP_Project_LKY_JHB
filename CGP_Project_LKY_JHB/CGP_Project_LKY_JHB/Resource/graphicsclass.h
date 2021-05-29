@@ -53,7 +53,7 @@ public:
 private:
 	D3DClass* m_D3D;
 	CameraClass* m_Camera;
-	ModelClass* m_Model_Mars;
+	ModelClass* m_Model_Earth;
 	ModelClass* m_Model_Spaceship;
 	LightShaderClass* m_LightShader;
 	LightClass* m_Light;

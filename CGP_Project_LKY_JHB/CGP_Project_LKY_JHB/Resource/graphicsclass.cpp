@@ -8,7 +8,7 @@ GraphicsClass::GraphicsClass()
 {
 	m_D3D = 0;
 	m_Camera = 0;
-	m_Model_Mars = 0;
+	m_Model_Earth = 0;
 	m_Model_Spaceship = 0;
 	m_LightShader = 0;
 	m_Light = 0;
@@ -72,14 +72,14 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 //	m_Camera->SetPosition(0.0f, 0.5f, -3.0f);
 
 	// Create the model object.
-	m_Model_Mars = new ModelClass;
-	if(!m_Model_Mars)
+	m_Model_Earth = new ModelClass;
+	if(!m_Model_Earth)
 	{
 		return false;
 	}
 
 	// Initialize the model object.
-	result = m_Model_Mars->Initialize(m_D3D->GetDevice(), (char *)"data/mars.obj", (wchar_t *)L"data/mars.dds");
+	result = m_Model_Earth->Initialize(m_D3D->GetDevice(), (char *)"data/earth.obj", (wchar_t *)L"data/earth2.png");
 //	result = m_Model->Initialize(m_D3D->GetDevice(), "../Engine/data/chair.txt", L"../Engine/data/chair_d.dds");
 
 	if(!result)
@@ -287,11 +287,11 @@ void GraphicsClass::Shutdown()
 	}
 
 	// Release the model object.
-	if(m_Model_Mars)
+	if(m_Model_Earth)
 	{
-		m_Model_Mars->Shutdown();
-		delete m_Model_Mars;
-		m_Model_Mars = 0;
+		m_Model_Earth->Shutdown();
+		delete m_Model_Earth;
+		m_Model_Earth = 0;
 	}
 
 	// Release the model object.
@@ -400,7 +400,7 @@ bool GraphicsClass::Frame(int fps, int cpu, float frameTime)
 		return false;
 	}
 
-	result = m_Text->SetPolygonNum(m_Model_Mars->GetPolygonCount() + m_Model_Spaceship->GetPolygonCount(), m_D3D->GetDeviceContext());
+	result = m_Text->SetPolygonNum(m_Model_Earth->GetPolygonCount() + m_Model_Spaceship->GetPolygonCount(), m_D3D->GetDeviceContext());
 	if (!result)
 	{
 		return false;
@@ -532,29 +532,30 @@ bool GraphicsClass::Render(float rotationX, float rotationY)
 	// Turn the Z buffer back on now that all 2D rendering has completed.
 	m_D3D->TurnZBufferOn();
 
-#pragma region Model Mars Rendering
+#pragma region Model Earth Rendering
 	// Rotate the world matrix by the rotation value so that the triangle will spin.
 	D3DXMatrixRotationYawPitchRoll(&rotationMatrix, rotationX, -rotationY, 0.0f);
-	D3DXMatrixTranslation(&translationMatrix, 0.0f, 0.0f, 50.0f);
+	D3DXMatrixTranslation(&translationMatrix, 0.0f, -5.0f, 0.0f);
 
 	// Put the model vertex and index buffers on the graphics pipeline to prepare them for drawing.
-	m_Model_Mars->Render(m_D3D->GetDeviceContext());
+	m_Model_Earth->Render(m_D3D->GetDeviceContext());
 
 	// Render the model using the light shader.
-	result = m_LightShader->Render(m_D3D->GetDeviceContext(), m_Model_Mars->GetIndexCount(), rotationMatrix * translationMatrix * worldMatrix, viewMatrix, projectionMatrix,
-		m_Model_Mars->GetTexture(), m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor(),
+	result = m_LightShader->Render(m_D3D->GetDeviceContext(), m_Model_Earth->GetIndexCount(), rotationMatrix * translationMatrix * worldMatrix, viewMatrix, projectionMatrix,
+		m_Model_Earth->GetTexture(), m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor(),
 		m_Camera->GetPosition(), m_Light->GetSpecularColor(), m_Light->GetSpecularPower());
 #pragma endregion
 
 #pragma region Model Spaceship Rendering
-	D3DXMatrixScaling(&scaleMatrix, 0.005f, 0.005f, 0.005f);
-	D3DXMatrixTranslation(&translationMatrix, 0.0f, -300.0f, 0.0f);
+	D3DXMatrixScaling(&scaleMatrix, 1.0f, 1.0f, 1.0f);
+	D3DXMatrixTranslation(&translationMatrix, 0.0f, 0.0f, 0.0f);
+	D3DXMatrixRotationYawPitchRoll(&rotationMatrix, 0.0f, D3DX_PI * 2 / 5, 0.0f);
 
 	// Put the model vertex and index buffers on the graphics pipeline to prepare them for drawing.
 	m_Model_Spaceship->Render(m_D3D->GetDeviceContext());
 
 	// Render the model using the light shader.
-	result = m_LightShader->Render(m_D3D->GetDeviceContext(), m_Model_Spaceship->GetIndexCount(), translationMatrix * scaleMatrix * worldMatrix, viewMatrix, projectionMatrix,
+	result = m_LightShader->Render(m_D3D->GetDeviceContext(), m_Model_Spaceship->GetIndexCount(), rotationMatrix * translationMatrix * scaleMatrix * worldMatrix, viewMatrix, projectionMatrix,
 		m_Model_Spaceship->GetTexture(), m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor(),
 		m_Camera->GetPosition(), m_Light->GetSpecularColor(), m_Light->GetSpecularPower());
 #pragma endregion
