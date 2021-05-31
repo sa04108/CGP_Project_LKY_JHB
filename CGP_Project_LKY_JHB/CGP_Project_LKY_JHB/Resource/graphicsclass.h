@@ -47,8 +47,9 @@ public:
 	bool Render();
 	bool Render(float, float);
 
-	void SetRotationSpeedX(float);
-	void SetRotationSpeedY(float);
+	void SetSpaceshipSpeed(float);
+	void SetSpaceshipLeft();
+	void SetSpaceshipRight();
 
 private:
 	D3DClass* m_D3D;
@@ -64,14 +65,21 @@ private:
 	BitmapClass* m_Bitmap_Background;
 
 	TextClass* m_Text;
-	TimerClass* m_Timer;
 
 	int modelCount;
 	unsigned long m_startTime;
 	int m_second;
+	int m_frameTime;
 
-	float rotationSpeedX;
-	float rotationSpeedY;
+	float spaceshipSpeed;
+	float spaceshipSideSpeed;
+	float spaceshipMaxPosX;
+	float spaceshipMaxPosY;
+	float spaceshipMaxRotation;
+
+	float s_trans_x;
+	float s_trans_y;
+	float s_rotation_y;
 };
 
 #endif

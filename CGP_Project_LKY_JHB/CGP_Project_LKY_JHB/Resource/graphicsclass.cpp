@@ -19,13 +19,20 @@ GraphicsClass::GraphicsClass()
 	m_Bitmap_Background = 0;
 
 	m_Text = 0;
-	m_Timer = 0;
 	modelCount = 0;
 	m_startTime = 0;
 	m_second = 0;
+	m_frameTime = 0;
 
-	rotationSpeedX = 0.0f;
-	rotationSpeedY = 0.0f;
+	spaceshipSpeed = 0; // 우주선 앞뒤 이동속도
+	spaceshipSideSpeed = 2.0f; // 우주선 좌우 이동 및 회전속도
+	spaceshipMaxPosX = 3.0f; // 우주선 좌우 최대 위치 (x값)
+	spaceshipMaxPosY = 0.5f; // 우주선 좌우 최대 위치 (y값)
+	spaceshipMaxRotation = D3DX_PI / 6.0f; // 우주선 좌우 이동시 최대 회전값 (우주선 기준 y축)
+
+	s_trans_x = 0.0f;
+	s_trans_y = 0.0f;
+	s_rotation_y = 0.0f;
 }
 
 
@@ -218,19 +225,6 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 		return false;
 	}
 
-	m_Timer = new TimerClass;
-	if (!m_Timer)
-	{
-		return false;
-	}
-
-	result = m_Timer->Initialize();
-	if (!result)
-	{
-		MessageBox(hwnd, L"Could not initialize the timer.", L"Error", MB_OK);
-		return false;
-	}
-
 	m_startTime = timeGetTime();
 
 	return true;
@@ -325,13 +319,6 @@ void GraphicsClass::Shutdown()
 		m_Text = 0;
 	}
 
-	if (m_Timer)
-	{
-		m_Timer->~TimerClass();
-		delete m_Timer;
-		m_Timer = 0;
-	}
-
 	return;
 }
 
@@ -372,9 +359,10 @@ bool GraphicsClass::Frame(int fps, int cpu, float frameTime)
 	static float rotationX = 0.0f;
 	static float rotationY = 0.0f;
 
-	rotationX += rotationSpeedX;
+	m_frameTime = frameTime;
+
 	// Update the rotation variable each frame.
-	rotationY += (float)D3DX_PI * 0.005f + rotationSpeedY;
+	rotationY += (float)D3DX_PI * 0.0005f + spaceshipSpeed;
 	if (rotationY > 360.0f)
 	{
 		rotationY -= 360.0f;
@@ -412,13 +400,11 @@ bool GraphicsClass::Frame(int fps, int cpu, float frameTime)
 		return false;
 	}
 
-	result = m_Text->SetTime((int)m_Timer->GetTime(), m_D3D->GetDeviceContext());
+	result = m_Text->SetTime(frameTime, m_D3D->GetDeviceContext());
 	if (!result)
 	{
 		return false;
 	}
-
-	m_Timer->Frame();
 
 	if (timeGetTime() >= (m_startTime + 1000))
 	{
@@ -443,7 +429,11 @@ bool GraphicsClass::Render(float rotationX, float rotationY)
 {
 	D3DXMATRIX worldMatrix, viewMatrix, projectionMatrix, orthoMatrix;
 	D3DXMATRIX rotationMatrix, translationMatrix, scaleMatrix;
+	D3DXMATRIX rotationMatrix_;
 	bool result;
+	// 연료통 UI 텍스쳐의 크기 / 0일 때 최소, 1일 때 최대
+	static float textureSize = 0.0f;
+	float deltaTime = m_frameTime / 1000.0f;
 
 
 	// Clear the buffers to begin the scene.
@@ -480,6 +470,41 @@ bool GraphicsClass::Render(float rotationX, float rotationY)
 	}
 #pragma endregion
 
+	// Turn the Z buffer back on now that all 2D rendering has completed.
+	m_D3D->TurnZBufferOn();
+
+#pragma region Model Earth Rendering
+	// Rotate the world matrix by the rotation value so that the triangle will spin.
+	D3DXMatrixScaling(&scaleMatrix, 2.0f, 2.0f, 2.0f);
+	D3DXMatrixRotationYawPitchRoll(&rotationMatrix, rotationX, -rotationY, 0.0f);
+	D3DXMatrixTranslation(&translationMatrix, 0.0f, -4.0f, 0.0f);
+
+	// Put the model vertex and index buffers on the graphics pipeline to prepare them for drawing.
+	m_Model_Earth->Render(m_D3D->GetDeviceContext());
+
+	// Render the model using the light shader.
+	result = m_LightShader->Render(m_D3D->GetDeviceContext(), m_Model_Earth->GetIndexCount(), rotationMatrix * translationMatrix * scaleMatrix * worldMatrix, viewMatrix, projectionMatrix,
+		m_Model_Earth->GetTexture(), m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor(),
+		m_Camera->GetPosition(), m_Light->GetSpecularColor(), m_Light->GetSpecularPower());
+#pragma endregion
+
+#pragma region Model Spaceship Rendering
+	D3DXMatrixTranslation(&translationMatrix, s_trans_x, s_trans_y, 0.0f);
+	D3DXMatrixRotationX(&rotationMatrix, D3DX_PI * 2 / 5);
+	D3DXMatrixRotationY(&rotationMatrix_, s_rotation_y);
+
+	// Put the model vertex and index buffers on the graphics pipeline to prepare them for drawing.
+	m_Model_Spaceship->Render(m_D3D->GetDeviceContext());
+
+	// Render the model using the light shader.
+	result = m_LightShader->Render(m_D3D->GetDeviceContext(), m_Model_Spaceship->GetIndexCount(), rotationMatrix_ * rotationMatrix * translationMatrix * worldMatrix, viewMatrix, projectionMatrix,
+		m_Model_Spaceship->GetTexture(), m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor(),
+		m_Camera->GetPosition(), m_Light->GetSpecularColor(), m_Light->GetSpecularPower());
+#pragma endregion
+
+	// Turn off the Z buffer to begin all 2D rendering.
+	m_D3D->TurnZBufferOff();
+
 	// Turn on the alpha blending before rendering the text.
 	m_D3D->TurnOnAlphaBlending();
 
@@ -504,8 +529,9 @@ bool GraphicsClass::Render(float rotationX, float rotationY)
 #pragma region Fuel Bitmap
 	D3DXMatrixScaling(&scaleMatrix, 0.5f, 0.5f, 1.0f);
 
+	textureSize += (deltaTime / 60.0f);
 	// Put the bitmap vertex and index buffers on the graphics pipeline to prepare them for drawing.
-	result = m_Bitmap_Fuel->Render(m_D3D->GetDeviceContext(), 900, 800, 0.7f);
+	result = m_Bitmap_Fuel->Render(m_D3D->GetDeviceContext(), 900, 800, textureSize);
 	if (!result)
 	{
 		return false;
@@ -532,34 +558,6 @@ bool GraphicsClass::Render(float rotationX, float rotationY)
 	// Turn the Z buffer back on now that all 2D rendering has completed.
 	m_D3D->TurnZBufferOn();
 
-#pragma region Model Earth Rendering
-	// Rotate the world matrix by the rotation value so that the triangle will spin.
-	D3DXMatrixRotationYawPitchRoll(&rotationMatrix, rotationX, -rotationY, 0.0f);
-	D3DXMatrixTranslation(&translationMatrix, 0.0f, -5.0f, 0.0f);
-
-	// Put the model vertex and index buffers on the graphics pipeline to prepare them for drawing.
-	m_Model_Earth->Render(m_D3D->GetDeviceContext());
-
-	// Render the model using the light shader.
-	result = m_LightShader->Render(m_D3D->GetDeviceContext(), m_Model_Earth->GetIndexCount(), rotationMatrix * translationMatrix * worldMatrix, viewMatrix, projectionMatrix,
-		m_Model_Earth->GetTexture(), m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor(),
-		m_Camera->GetPosition(), m_Light->GetSpecularColor(), m_Light->GetSpecularPower());
-#pragma endregion
-
-#pragma region Model Spaceship Rendering
-	D3DXMatrixScaling(&scaleMatrix, 1.0f, 1.0f, 1.0f);
-	D3DXMatrixTranslation(&translationMatrix, 0.0f, 0.0f, 0.0f);
-	D3DXMatrixRotationYawPitchRoll(&rotationMatrix, 0.0f, D3DX_PI * 2 / 5, 0.0f);
-
-	// Put the model vertex and index buffers on the graphics pipeline to prepare them for drawing.
-	m_Model_Spaceship->Render(m_D3D->GetDeviceContext());
-
-	// Render the model using the light shader.
-	result = m_LightShader->Render(m_D3D->GetDeviceContext(), m_Model_Spaceship->GetIndexCount(), rotationMatrix * translationMatrix * scaleMatrix * worldMatrix, viewMatrix, projectionMatrix,
-		m_Model_Spaceship->GetTexture(), m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor(),
-		m_Camera->GetPosition(), m_Light->GetSpecularColor(), m_Light->GetSpecularPower());
-#pragma endregion
-
 
 	if(!result)
 	{
@@ -573,13 +571,45 @@ bool GraphicsClass::Render(float rotationX, float rotationY)
 }
 
 
-void GraphicsClass::SetRotationSpeedX(float rotationSpeedX)
+void GraphicsClass::SetSpaceshipSpeed(float spaceshipSpeed)
 {
-	this->rotationSpeedX = rotationSpeedX;
+	this->spaceshipSpeed = spaceshipSpeed;
 }
 
 
-void GraphicsClass::SetRotationSpeedY(float rotationSpeedY)
+void GraphicsClass::SetSpaceshipLeft()
 {
-	this->rotationSpeedY = rotationSpeedY;
+	// Unity의 time.deltaTime 과 동일
+	// 1초 동안 실행되는 deltaTime의 합은 1
+	float deltaTime = (float)m_frameTime / 1000.0f;
+	
+	if (s_trans_x > -spaceshipMaxPosX)
+		s_trans_x += -spaceshipMaxPosX * spaceshipSideSpeed * deltaTime;
+
+	if (s_trans_x <= 0 && s_trans_y > -spaceshipMaxPosY)
+		s_trans_y += -spaceshipMaxPosY * spaceshipSideSpeed * deltaTime;
+	else if(s_trans_x > 0)
+		s_trans_y += spaceshipMaxPosY * spaceshipSideSpeed * deltaTime;
+
+	if (s_rotation_y < spaceshipMaxRotation)
+		s_rotation_y += spaceshipMaxRotation * spaceshipSideSpeed * deltaTime;
+}
+
+
+void GraphicsClass::SetSpaceshipRight()
+{
+	// Unity의 time.deltaTime 과 동일
+	// 1초 동안 실행되는 deltaTime의 합은 1
+	float deltaTime = m_frameTime / 1000.0f;
+
+	if (s_trans_x < spaceshipMaxPosX)
+		s_trans_x += spaceshipMaxPosX * spaceshipSideSpeed * deltaTime;
+
+	if (s_trans_x <= 0)
+		s_trans_y += spaceshipMaxPosY * spaceshipSideSpeed * deltaTime;
+	else if (s_trans_x > 0 && s_trans_y > -spaceshipMaxPosY)
+		s_trans_y += -spaceshipMaxPosY * spaceshipSideSpeed * deltaTime;
+
+	if (s_rotation_y > -spaceshipMaxRotation)
+		s_rotation_y += -spaceshipMaxRotation * spaceshipSideSpeed * deltaTime;
 }

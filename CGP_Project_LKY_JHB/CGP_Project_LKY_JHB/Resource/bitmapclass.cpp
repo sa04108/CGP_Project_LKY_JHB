@@ -221,7 +221,7 @@ bool BitmapClass::UpdateBuffers(ID3D11DeviceContext* deviceContext, int position
 
 	// If the position we are rendering this bitmap to has not changed then don't update the vertex buffer since it
 	// currently has the correct parameters.
-	if((positionX == m_previousPosX) && (positionY == m_previousPosY))
+	if((positionX == m_previousPosX) && (positionY == m_previousPosY) && (textureY == m_previousTextureY))
 	{
 		return true;
 	}
@@ -229,6 +229,7 @@ bool BitmapClass::UpdateBuffers(ID3D11DeviceContext* deviceContext, int position
 	// If it has changed then update the position it is being rendered to.
 	m_previousPosX = positionX;
 	m_previousPosY = positionY;
+	m_previousTextureY = textureY;
 
 	// Calculate the screen coordinates of the left side of the bitmap.
 	left = (float)((m_screenWidth / 2) * -1) + (float)positionX;

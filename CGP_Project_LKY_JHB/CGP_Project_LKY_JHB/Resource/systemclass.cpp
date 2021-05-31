@@ -154,8 +154,7 @@ void SystemClass::Run()
 {
 	MSG msg;
 	bool done, result;
-	static float rotationSpeedX = 0.0f;
-	static float rotationSpeedY = 0.0f;
+	static float spaceshipSpeed = 0.0f;
 
 
 	// Initialize the message structure.
@@ -195,33 +194,26 @@ void SystemClass::Run()
 
 			if (m_Input->IsKeyDown(DIK_W))
 			{
-				if (rotationSpeedY < 0.05f)
-					rotationSpeedY += 0.0005f;
-				m_Graphics->SetRotationSpeedY(rotationSpeedY);
+				if (spaceshipSpeed < 0.01f)
+					spaceshipSpeed += 0.0002f;
+				m_Graphics->SetSpaceshipSpeed(spaceshipSpeed);
 			}
 
 			if (m_Input->IsKeyDown(DIK_S))
 			{
-				if (rotationSpeedY > 0.0f)
-					rotationSpeedY -= 0.0005f;
-				m_Graphics->SetRotationSpeedY(rotationSpeedY);
+				if (spaceshipSpeed > 0.0f)
+					spaceshipSpeed -= 0.0002f;
+				m_Graphics->SetSpaceshipSpeed(spaceshipSpeed);
 			}
 
 			if (m_Input->IsKeyDown(DIK_A))
 			{
-				rotationSpeedX = -0.05f;
-				m_Graphics->SetRotationSpeedX(rotationSpeedX);
+				m_Graphics->SetSpaceshipLeft();
 			}
 
-			else if (m_Input->IsKeyDown(DIK_D))
+			if (m_Input->IsKeyDown(DIK_D))
 			{
-				rotationSpeedX = 0.05f;
-				m_Graphics->SetRotationSpeedX(rotationSpeedX);
-			}
-
-			else
-			{
-				m_Graphics->SetRotationSpeedX(0.0f);
+				m_Graphics->SetSpaceshipRight();
 			}
 
 		}
