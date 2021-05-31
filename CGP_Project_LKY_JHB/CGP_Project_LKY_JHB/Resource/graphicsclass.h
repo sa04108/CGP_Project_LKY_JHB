@@ -70,6 +70,7 @@ private:
 	unsigned long m_startTime;
 	int m_second;
 	int m_frameTime;
+	float deltaTime;
 
 	float spaceshipSpeed;
 	float spaceshipSideSpeed;

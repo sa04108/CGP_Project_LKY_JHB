@@ -23,6 +23,7 @@ GraphicsClass::GraphicsClass()
 	m_startTime = 0;
 	m_second = 0;
 	m_frameTime = 0;
+	deltaTime = 0;
 
 	spaceshipSpeed = 0; // 우주선 앞뒤 이동속도
 	spaceshipSideSpeed = 2.0f; // 우주선 좌우 이동 및 회전속도
@@ -360,6 +361,7 @@ bool GraphicsClass::Frame(int fps, int cpu, float frameTime)
 	static float rotationY = 0.0f;
 
 	m_frameTime = frameTime;
+	deltaTime = (float)m_frameTime / 1000.0f;
 
 	// Update the rotation variable each frame.
 	rotationY += (float)D3DX_PI * 0.0005f + spaceshipSpeed;
@@ -433,7 +435,6 @@ bool GraphicsClass::Render(float rotationX, float rotationY)
 	bool result;
 	// 연료통 UI 텍스쳐의 크기 / 0일 때 최소, 1일 때 최대
 	static float textureSize = 0.0f;
-	float deltaTime = m_frameTime / 1000.0f;
 
 
 	// Clear the buffers to begin the scene.
@@ -573,7 +574,7 @@ bool GraphicsClass::Render(float rotationX, float rotationY)
 
 void GraphicsClass::SetSpaceshipSpeed(float spaceshipSpeed)
 {
-	this->spaceshipSpeed = spaceshipSpeed;
+	this->spaceshipSpeed = spaceshipSpeed * deltaTime;
 }
 
 
@@ -581,8 +582,7 @@ void GraphicsClass::SetSpaceshipLeft()
 {
 	// Unity의 time.deltaTime 과 동일
 	// 1초 동안 실행되는 deltaTime의 합은 1
-	float deltaTime = (float)m_frameTime / 1000.0f;
-	
+
 	if (s_trans_x > -spaceshipMaxPosX)
 		s_trans_x += -spaceshipMaxPosX * spaceshipSideSpeed * deltaTime;
 
@@ -600,7 +600,6 @@ void GraphicsClass::SetSpaceshipRight()
 {
 	// Unity의 time.deltaTime 과 동일
 	// 1초 동안 실행되는 deltaTime의 합은 1
-	float deltaTime = m_frameTime / 1000.0f;
 
 	if (s_trans_x < spaceshipMaxPosX)
 		s_trans_x += spaceshipMaxPosX * spaceshipSideSpeed * deltaTime;
