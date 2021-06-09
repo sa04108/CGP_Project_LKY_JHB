@@ -155,6 +155,7 @@
     <ClCompile Include="Resource\lightshaderclass.cpp" />
     <ClCompile Include="Resource\main.cpp" />
     <ClCompile Include="Resource\modelclass.cpp" />
+    <ClCompile Include="Resource\soundclass.cpp" />
     <ClCompile Include="Resource\systemclass.cpp" />
     <ClCompile Include="Resource\textclass.cpp" />
     <ClCompile Include="Resource\textureclass.cpp" />
@@ -174,6 +175,7 @@
     <ClInclude Include="Resource\lightclass.h" />
     <ClInclude Include="Resource\lightshaderclass.h" />
     <ClInclude Include="Resource\modelclass.h" />
+    <ClInclude Include="Resource\soundclass.h" />
     <ClInclude Include="Resource\systemclass.h" />
     <ClInclude Include="Resource\textclass.h" />
     <ClInclude Include="Resource\textureclass.h" />
