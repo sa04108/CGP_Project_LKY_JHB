@@ -32,7 +32,7 @@ GraphicsClass::GraphicsClass()
 	m_frameTime = 0;
 	deltaTime = 0;
 
-	spaceshipSpeed = 0; // 우주선 앞뒤 이동속도
+	spaceshipSpeed = 0.001f; // 우주선 앞뒤 이동속도
 	spaceshipSideSpeed = 2.0f; // 우주선 좌우 이동 및 회전속도
 	spaceshipMaxPosX = 3.0f; // 우주선 좌우 최대 위치 (x값)
 	spaceshipMaxPosY = 0.5f; // 우주선 좌우 최대 위치 (-y값)
