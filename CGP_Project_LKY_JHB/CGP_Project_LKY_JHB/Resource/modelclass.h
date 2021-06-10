@@ -19,6 +19,10 @@ using namespace std;
 ///////////////////////
 #include "textureclass.h"
 
+struct InstanceType
+{
+	D3DXVECTOR3 position;
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 // Class name: ModelClass
@@ -53,21 +57,23 @@ private:
 	};
 
 public:
+
 	ModelClass();
 	ModelClass(const ModelClass&);
 	~ModelClass();
 
-	bool Initialize(ID3D11Device*, char*, WCHAR*);
+	bool Initialize(ID3D11Device*, char*, WCHAR*, InstanceType*);
+	bool InitializeBuffers(ID3D11Device*, InstanceType*);
 	void Shutdown();
 	void Render(ID3D11DeviceContext*);
 
-	int GetIndexCount();
+	int GetVertexCount();
+	int GetInstanceCount();
 	int GetPolygonCount();
 	ID3D11ShaderResourceView* GetTexture();
 
 
 private:
-	bool InitializeBuffers(ID3D11Device*);
 	void ShutdownBuffers();
 	void RenderBuffers(ID3D11DeviceContext*);
 
@@ -84,8 +90,8 @@ private:
 
 
 private:
-	ID3D11Buffer *m_vertexBuffer, *m_indexBuffer;
-	int m_vertexCount, m_indexCount;
+	ID3D11Buffer *m_vertexBuffer, *m_instanceBuffer;
+	int m_vertexCount, m_instanceCount;
 	TextureClass* m_Texture;
 	ModelType* m_model;
 

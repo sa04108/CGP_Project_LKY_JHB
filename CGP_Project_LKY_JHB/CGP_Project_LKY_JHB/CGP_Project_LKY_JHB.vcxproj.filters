@@ -71,76 +71,76 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Resource\bitmapclass.h">
-      <Filter>소스 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Resource\cameraclass.h">
-      <Filter>소스 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Resource\cpuclass.h">
-      <Filter>소스 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Resource\d3dclass.h">
-      <Filter>소스 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Resource\fontclass.h">
-      <Filter>소스 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Resource\fontshaderclass.h">
-      <Filter>소스 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Resource\fpsclass.h">
-      <Filter>소스 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Resource\graphicsclass.h">
-      <Filter>소스 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Resource\inputclass.h">
-      <Filter>소스 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Resource\lightclass.h">
-      <Filter>소스 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Resource\lightshaderclass.h">
-      <Filter>소스 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Resource\modelclass.h">
-      <Filter>소스 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Resource\systemclass.h">
-      <Filter>소스 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Resource\textclass.h">
-      <Filter>소스 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Resource\textureclass.h">
-      <Filter>소스 파일</Filter>
+    <ClInclude Include="Resource\timerclass.h">
+      <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Resource\textureshaderclass.h">
-      <Filter>소스 파일</Filter>
+      <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="Resource\timerclass.h">
-      <Filter>소스 파일</Filter>
+    <ClInclude Include="Resource\textureclass.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\textclass.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\systemclass.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\modelclass.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\lightshaderclass.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\lightclass.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\inputclass.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\graphicsclass.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\fpsclass.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\fontshaderclass.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\fontclass.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\d3dclass.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\cpuclass.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\cameraclass.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\bitmapclass.h">
+      <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Resource\font.ps">
-      <Filter>소스 파일</Filter>
+      <Filter>리소스 파일</Filter>
     </None>
     <None Include="Resource\font.vs">
-      <Filter>소스 파일</Filter>
+      <Filter>리소스 파일</Filter>
     </None>
     <None Include="Resource\light.ps">
-      <Filter>소스 파일</Filter>
+      <Filter>리소스 파일</Filter>
     </None>
     <None Include="Resource\light.vs">
-      <Filter>소스 파일</Filter>
+      <Filter>리소스 파일</Filter>
     </None>
     <None Include="Resource\texture.ps">
-      <Filter>소스 파일</Filter>
+      <Filter>리소스 파일</Filter>
     </None>
     <None Include="Resource\texture.vs">
-      <Filter>소스 파일</Filter>
+      <Filter>리소스 파일</Filter>
     </None>
   </ItemGroup>
 </Project>

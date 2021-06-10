@@ -8,6 +8,8 @@
 ///////////////////////
 // MY CLASS INCLUDES //
 ///////////////////////
+#include <time.h>
+
 #include "d3dclass.h"
 #include "cameraclass.h"
 #include "modelclass.h"
@@ -18,8 +20,6 @@
 #include "bitmapclass.h"
 
 #include "textclass.h"
-
-#include "timerclass.h"
 
 /////////////
 // GLOBALS //
@@ -33,6 +33,12 @@ const float SCREEN_NEAR = 0.1f;
 ////////////////////////////////////////////////////////////////////////////////
 // Class name: GraphicsClass
 ////////////////////////////////////////////////////////////////////////////////
+typedef struct Position {
+	float x;
+	float y;
+	float z;
+} Pos;
+
 class GraphicsClass
 {
 public:
@@ -45,17 +51,26 @@ public:
 	bool Frame(int, int);
 	bool Frame(int, int, float);
 	bool Render();
-	bool Render(float, float);
+	bool Render(float);
 
+	bool ReinitializeBarrel();
+	void GainBarrel(float&);
+	void SetFuelUp(float&);
+
+	void KnuthShuffle();
 	void SetSpaceshipSpeed(float);
 	void SetSpaceshipLeft();
 	void SetSpaceshipRight();
+
+	void SetCameraPos(float, float, float);
+	void SetCameraRotation(float, float, float);
 
 private:
 	D3DClass* m_D3D;
 	CameraClass* m_Camera;
 	ModelClass* m_Model_Earth;
 	ModelClass* m_Model_Spaceship;
+	ModelClass* m_Model_Barrel;
 	LightShaderClass* m_LightShader;
 	LightClass* m_Light;
 
@@ -63,13 +78,21 @@ private:
 	BitmapClass* m_Bitmap_Fuel;
 	BitmapClass* m_Bitmap_Fuel_Empty;
 	BitmapClass* m_Bitmap_Background;
+	BitmapClass* m_Bitmap_Gameclear;
+	BitmapClass* m_Bitmap_Gameover;
 
 	TextClass* m_Text;
+	InstanceType* instances;
+
+	int barrelCount;
+	int barrelPosNum[3];
 
 	int modelCount;
-	unsigned long m_startTime;
-	int m_second;
+	
+	int max_barrel_gen;
+	float barrel_gen_time;
 	int m_frameTime;
+	int m_second;
 	float deltaTime;
 
 	float spaceshipSpeed;
@@ -81,6 +104,8 @@ private:
 	float s_trans_x;
 	float s_trans_y;
 	float s_rotation_y;
+
+	bool isGameover;
 };
 
 #endif

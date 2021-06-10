@@ -238,6 +238,17 @@ void SystemClass::Run()
 				m_Graphics->SetSpaceshipRight();
 			}
 
+			if (m_Input->IsKeyDown(DIK_SPACE))
+			{
+				m_Graphics->SetCameraPos(50.0f, -8.0f, 0.0f);
+				m_Graphics->SetCameraRotation(0.0f, -90.0f, 0.0f);
+			}
+
+			if (m_Input->IsKeyDown(DIK_R))
+			{
+				m_Graphics->SetCameraPos(0.0f, 0.0f, -10.0f);
+				m_Graphics->SetCameraRotation(0.0f, 0.0f, 0.0f);
+			}
 		}
 
 	}
