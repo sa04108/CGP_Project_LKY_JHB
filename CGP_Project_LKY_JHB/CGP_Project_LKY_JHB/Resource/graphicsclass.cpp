@@ -589,6 +589,8 @@ bool GraphicsClass::Render(float rotation)
 		{
 			return false;
 		}
+
+		isGameover = true;
 	}
 #pragma endregion
 
@@ -677,15 +679,15 @@ bool GraphicsClass::Render(float rotation)
 #pragma region Fuel Bitmap
 		D3DXMatrixScaling(&scaleMatrix, 0.5f, 0.5f, 1.0f);
 
-		textureSize += (deltaTime / 30.0f);
+		textureSize += spaceshipSpeed * deltaTime * 2.0f;
 
 		static float r = D3DX_PI / 2;
-		r -= rotation;
+		r -= (float)D3DX_PI * 0.0005f + spaceshipSpeed;
 
 		if (r < 0.0f)
 		{
 			GainBarrel(textureSize);
-			r += 100.0f;
+			r += D3DX_PI * 2;
 		}
 
 		if (textureSize < 0)
@@ -811,7 +813,7 @@ void GraphicsClass::GainBarrel(float& textureSize)
 
 void GraphicsClass::SetFuelUp(float& textureSize)
 {
-	textureSize -= 0.02f;
+	textureSize -= 0.05f;
 }
 
 

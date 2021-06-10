@@ -223,7 +223,7 @@ void SystemClass::Run()
 
 			if (m_Input->IsKeyDown(DIK_S))
 			{
-				if (spaceshipSpeed > 0.0f)
+				if (spaceshipSpeed > 0.2f)
 					spaceshipSpeed -= 0.02f;
 				m_Graphics->SetSpaceshipSpeed(spaceshipSpeed);
 			}
