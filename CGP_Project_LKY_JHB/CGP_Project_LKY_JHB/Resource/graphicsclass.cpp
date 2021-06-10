@@ -9,6 +9,7 @@ GraphicsClass::GraphicsClass()
 {
 	m_D3D = 0;
 	m_Camera = 0;
+	m_Model_SolarSystem = 0;
 	m_Model_Earth = 0;
 	m_Model_Spaceship = 0;
 	m_Model_Barrel = 0;
@@ -27,7 +28,6 @@ GraphicsClass::GraphicsClass()
 	modelCount = 0;
 
 	max_barrel_gen = 2;
-	barrel_gen_time = 0;
 	m_second = 0;
 	m_frameTime = 0;
 	deltaTime = 0;
@@ -93,6 +93,24 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 //	m_Camera->SetPosition(0.0f, 0.5f, -3.0f);
 
 	// Create the model object.
+	m_Model_SolarSystem = new ModelClass;
+	if (!m_Model_SolarSystem)
+	{
+		return false;
+	}
+
+	// Initialize the model object.
+	result = m_Model_SolarSystem->Initialize(m_D3D->GetDevice(), (char*)"data/solarsystem.obj", (wchar_t*)L"data/solarsystem.png", NULL);
+	//	result = m_Model->Initialize(m_D3D->GetDevice(), "../Engine/data/chair.txt", L"../Engine/data/chair_d.dds");
+
+	if (!result)
+	{
+		MessageBox(hwnd, L"Could not initialize the model object.", L"Error", MB_OK);
+		return false;
+	}
+	modelCount++;
+
+	// Create the model object.
 	m_Model_Earth = new ModelClass;
 	if(!m_Model_Earth)
 	{
@@ -108,6 +126,7 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 		MessageBox(hwnd, L"Could not initialize the model object.", L"Error", MB_OK);
 		return false;
 	}
+	modelCount++;
 
 	// Create the model object.
 	m_Model_Spaceship = new ModelClass;
@@ -124,6 +143,7 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 		MessageBox(hwnd, L"Could not initialize the model object.", L"Error", MB_OK);
 		return false;
 	}
+	modelCount++;
 
 	// Create the model object.
 	m_Model_Barrel = new ModelClass;
@@ -134,16 +154,13 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 
 	// Initialize the model object.
 	result = m_Model_Barrel->Initialize(m_D3D->GetDevice(), (char*)"data/barrel.obj", (wchar_t*)L"data/barrel.png", NULL);
+	result = ReinitializeBarrel();
 
 	if (!result)
 	{
 		MessageBox(hwnd, L"Could not initialize the model object.", L"Error", MB_OK);
 		return false;
 	}
-
-	modelCount++;
-	modelCount++;
-	modelCount++;
 
 	// Create the light shader object.
 	m_LightShader = new LightShaderClass;
@@ -356,6 +373,14 @@ void GraphicsClass::Shutdown()
 	}
 
 	// Release the model object.
+	if(m_Model_SolarSystem)
+	{
+		m_Model_SolarSystem->Shutdown();
+		delete m_Model_SolarSystem;
+		m_Model_SolarSystem = 0;
+	}
+
+	// Release the model object.
 	if(m_Model_Earth)
 	{
 		m_Model_Earth->Shutdown();
@@ -468,7 +493,7 @@ bool GraphicsClass::Frame(int fps, int cpu, float frameTime)
 		return false;
 	}
 
-	result = m_Text->SetPolygonNum(m_Model_Earth->GetPolygonCount() + m_Model_Spaceship->GetPolygonCount() + m_Model_Barrel->GetPolygonCount(), m_D3D->GetDeviceContext());
+	result = m_Text->SetPolygonNum(m_Model_SolarSystem->GetPolygonCount() + m_Model_Earth->GetPolygonCount() + m_Model_Spaceship->GetPolygonCount() + m_Model_Barrel->GetPolygonCount(), m_D3D->GetDeviceContext());
 	if (!result)
 	{
 		return false;
@@ -480,9 +505,12 @@ bool GraphicsClass::Frame(int fps, int cpu, float frameTime)
 		return false;
 	}
 
-	static float m_second_f = 0.0f;
-	m_second_f += deltaTime;
-	m_second = (int)m_second_f;
+	if (!isGameover)
+	{
+		static float m_second_f = 0.0f;
+		m_second_f += deltaTime;
+		m_second = (int)m_second_f;
+	}
 
 	result = m_Text->SetTime(m_second, m_D3D->GetDeviceContext());
 	if (!result)
@@ -517,6 +545,10 @@ bool GraphicsClass::Render(float rotation)
 	bool result;
 	// 연료통 UI 텍스쳐의 크기 / 0일 때 최소, 1일 때 최대
 	static float textureSize = 0.0f;
+	static float r1 = 0.0f;
+	static float r2 = D3DX_PI / 2;
+	r1 -= (float)D3DX_PI * 0.0005f + spaceshipSpeed;
+	r2 -= (float)D3DX_PI * 0.0005f + spaceshipSpeed;
 
 
 	// Clear the buffers to begin the scene.
@@ -554,7 +586,7 @@ bool GraphicsClass::Render(float rotation)
 #pragma endregion
 
 #pragma region GameOver Bitmap
-	if (isGameover)
+	if (isGameover && m_second < 60)
 	{
 		D3DXMatrixScaling(&scaleMatrix, 3.2f, 3.2f, 3.2f);
 		// Put the bitmap vertex and index buffers on the graphics pipeline to prepare them for drawing.
@@ -574,7 +606,7 @@ bool GraphicsClass::Render(float rotation)
 #pragma endregion
 
 #pragma region GameClear Bitmap
-	if (!isGameover && m_second >= 60)
+	if (m_second >= 60)
 	{
 		// Put the bitmap vertex and index buffers on the graphics pipeline to prepare them for drawing.
 		result = m_Bitmap_Gameclear->Render(m_D3D->GetDeviceContext(), 275, 430);
@@ -599,6 +631,21 @@ bool GraphicsClass::Render(float rotation)
 	m_D3D->TurnZBufferOn();
 
 	if (!isGameover) {
+#pragma region Model Solar System Rendering
+		// Rotate the world matrix by the rotation value so that the triangle will spin.
+		D3DXMatrixScaling(&scaleMatrix, 1.0f, 1.0f, 1.0f);
+		D3DXMatrixRotationX(&rotationMatrix, -rotation);
+		D3DXMatrixTranslation(&translationMatrix, 0.0f, -9.0f, 0.0f);
+
+		// Put the model vertex and index buffers on the graphics pipeline to prepare them for drawing.
+		m_Model_SolarSystem->Render(m_D3D->GetDeviceContext());
+
+		// Render the model using the light shader.
+		result = m_LightShader->Render(m_D3D->GetDeviceContext(), m_Model_SolarSystem->GetVertexCount(), m_Model_SolarSystem->GetInstanceCount(), rotationMatrix * translationMatrix * scaleMatrix * worldMatrix, viewMatrix, projectionMatrix,
+			m_Model_SolarSystem->GetTexture(), m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor(),
+			m_Camera->GetPosition(), m_Light->GetSpecularColor(), m_Light->GetSpecularPower());
+#pragma endregion
+
 #pragma region Model Earth Rendering
 		// Rotate the world matrix by the rotation value so that the triangle will spin.
 		D3DXMatrixScaling(&scaleMatrix, 2.0f, 2.0f, 2.0f);
@@ -615,11 +662,10 @@ bool GraphicsClass::Render(float rotation)
 #pragma endregion
 
 #pragma region Barrel Rendering
-		barrel_gen_time += deltaTime;
-		if (barrel_gen_time >= 2.0f)
+		if (r1 < 0.0f)
 		{
-			barrel_gen_time = 0.0f;
 			ReinitializeBarrel();
+			r1 += D3DX_PI * 2;
 		}
 		D3DXMatrixScaling(&scaleMatrix, 1.0f, 1.0f, 1.0f);
 		D3DXMatrixRotationX(&rotationMatrix, -rotation + D3DX_PI / 2);
@@ -679,15 +725,12 @@ bool GraphicsClass::Render(float rotation)
 #pragma region Fuel Bitmap
 		D3DXMatrixScaling(&scaleMatrix, 0.5f, 0.5f, 1.0f);
 
-		textureSize += spaceshipSpeed * deltaTime * 2.0f;
+		textureSize += sqrtf(spaceshipSpeed) * deltaTime * 0.2f;
 
-		static float r = D3DX_PI / 2;
-		r -= (float)D3DX_PI * 0.0005f + spaceshipSpeed;
-
-		if (r < 0.0f)
+		if (r2 < 0.0f)
 		{
 			GainBarrel(textureSize);
-			r += D3DX_PI * 2;
+			r2 += D3DX_PI * 2;
 		}
 
 		if (textureSize < 0)
@@ -749,8 +792,12 @@ bool GraphicsClass::ReinitializeBarrel()
 	if (max_barrel_gen <= 0)
 		return false;
 
+	modelCount -= barrelCount;
+
 	srand((unsigned)time(NULL));
 	barrelCount = rand() % max_barrel_gen + 1;
+
+	modelCount += barrelCount;
 
 	instances = new InstanceType[barrelCount];
 	if (!instances)
@@ -813,7 +860,7 @@ void GraphicsClass::GainBarrel(float& textureSize)
 
 void GraphicsClass::SetFuelUp(float& textureSize)
 {
-	textureSize -= 0.05f;
+	textureSize -= 0.07f;
 }
 
 

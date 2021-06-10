@@ -9,6 +9,7 @@
 // MY CLASS INCLUDES //
 ///////////////////////
 #include <time.h>
+#include <cmath>
 
 #include "d3dclass.h"
 #include "cameraclass.h"
@@ -68,6 +69,7 @@ public:
 private:
 	D3DClass* m_D3D;
 	CameraClass* m_Camera;
+	ModelClass* m_Model_SolarSystem;
 	ModelClass* m_Model_Earth;
 	ModelClass* m_Model_Spaceship;
 	ModelClass* m_Model_Barrel;
@@ -90,7 +92,6 @@ private:
 	int modelCount;
 	
 	int max_barrel_gen;
-	float barrel_gen_time;
 	int m_frameTime;
 	int m_second;
 	float deltaTime;
