@@ -16,11 +16,10 @@
 #include "modelclass.h"
 #include "lightshaderclass.h"
 #include "lightclass.h"
-
 #include "textureshaderclass.h"
 #include "bitmapclass.h"
-
 #include "textclass.h"
+#include "soundclass.h"
 
 /////////////
 // GLOBALS //
@@ -55,11 +54,12 @@ public:
 	bool Render(float);
 
 	bool ReinitializeBarrel();
-	void GainBarrel(float&);
+	bool RemoveBarrel(int);
+	bool GainBarrel(float&);
 	void SetFuelUp(float&);
 
 	void KnuthShuffle();
-	void SetSpaceshipSpeed(float);
+	void ChangeSpaceshipSpeed(float);
 	void SetSpaceshipLeft();
 	void SetSpaceshipRight();
 
@@ -67,6 +67,7 @@ public:
 	void SetCameraRotation(float, float, float);
 
 private:
+	HWND m_hwnd;
 	D3DClass* m_D3D;
 	CameraClass* m_Camera;
 	ModelClass* m_Model_SolarSystem;
@@ -84,14 +85,12 @@ private:
 	BitmapClass* m_Bitmap_Gameover;
 
 	TextClass* m_Text;
+	SoundClass* m_Sound_Gain;
+
 	InstanceType* instances;
 
-	int barrelCount;
-	int barrelPosNum[3];
-
 	int modelCount;
-	
-	int max_barrel_gen;
+	float rotation_value;
 	int m_frameTime;
 	int m_second;
 	float deltaTime;
@@ -105,6 +104,10 @@ private:
 	float s_trans_x;
 	float s_trans_y;
 	float s_rotation_y;
+
+	int max_barrel_gen;
+	int barrelCount;
+	int barrelPosNum[3];
 
 	bool isGameover;
 };

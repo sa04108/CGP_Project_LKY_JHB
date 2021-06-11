@@ -50,7 +50,7 @@ public:
 	SoundClass(const SoundClass&);
 	~SoundClass();
 
-	bool Initialize(HWND);
+	bool Initialize(HWND, char*);
 	void Shutdown();
 
 private:

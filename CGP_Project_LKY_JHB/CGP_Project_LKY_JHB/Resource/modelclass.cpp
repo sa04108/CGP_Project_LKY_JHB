@@ -23,7 +23,7 @@ ModelClass::~ModelClass()
 }
 
 
-bool ModelClass::Initialize(ID3D11Device* device, char* modelFilename, WCHAR* textureFilename, InstanceType* instances)
+bool ModelClass::Initialize(ID3D11Device* device, char* modelFilename, WCHAR* textureFilename, InstanceType* instances, int instanceCount)
 {
 	bool result;
 
@@ -36,7 +36,7 @@ bool ModelClass::Initialize(ID3D11Device* device, char* modelFilename, WCHAR* te
 	}
 
 	// Initialize the vertex and index buffers.
-	result = InitializeBuffers(device, instances);
+	result = InitializeBuffers(device, instances, instanceCount);
 	if(!result)
 	{
 		return false;
@@ -99,7 +99,7 @@ ID3D11ShaderResourceView* ModelClass::GetTexture()
 }
 
 
-bool ModelClass::InitializeBuffers(ID3D11Device* device, InstanceType* instances)
+bool ModelClass::InitializeBuffers(ID3D11Device* device, InstanceType* instances, int instanceCount)
 {
 	VertexType* vertices;
 	D3D11_BUFFER_DESC vertexBufferDesc, instanceBufferDesc;
@@ -147,14 +147,7 @@ bool ModelClass::InitializeBuffers(ID3D11Device* device, InstanceType* instances
 	delete [] vertices;
 	vertices = 0;
 
-	m_instanceCount = sizeof(*instances) / 4;
-
-	if (instances == NULL)
-	{
-		m_instanceCount = 1;
-		instances = new InstanceType;
-		instances->position = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
-	}
+	m_instanceCount = instanceCount;
 
 	// Set up the description of the static instance buffer.
 	instanceBufferDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -175,12 +168,6 @@ bool ModelClass::InitializeBuffers(ID3D11Device* device, InstanceType* instances
 	{
 		return false;
 	}
-
-	if (m_instanceCount == 1)
-		delete instances;
-	else
-		delete[] instances;
-	instances = 0;
 
 	return true;
 }

@@ -62,8 +62,8 @@ public:
 	ModelClass(const ModelClass&);
 	~ModelClass();
 
-	bool Initialize(ID3D11Device*, char*, WCHAR*, InstanceType*);
-	bool InitializeBuffers(ID3D11Device*, InstanceType*);
+	bool Initialize(ID3D11Device*, char*, WCHAR*, InstanceType*, int = 1);
+	bool InitializeBuffers(ID3D11Device*, InstanceType*, int = 1);
 	void Shutdown();
 	void Render(ID3D11DeviceContext*);
 

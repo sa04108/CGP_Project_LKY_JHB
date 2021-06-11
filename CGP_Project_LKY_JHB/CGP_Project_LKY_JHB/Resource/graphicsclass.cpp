@@ -3,10 +3,12 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include "graphicsclass.h"
 #define SWAP(a, b) {int t; t=a; a=b; b=t;} //(((c)=(a)),((a)=(b)),((b)=(c)))
+enum SpaceshipPos { LEFT, MIDDLE, RIGHT, NOWHERE };
 
 
 GraphicsClass::GraphicsClass()
 {
+	m_hwnd = 0;
 	m_D3D = 0;
 	m_Camera = 0;
 	m_Model_SolarSystem = 0;
@@ -23,16 +25,19 @@ GraphicsClass::GraphicsClass()
 	m_Bitmap_Gameclear = 0;
 	m_Bitmap_Gameover = 0;
 
-	instances = 0;
 	m_Text = 0;
-	modelCount = 0;
+	m_Sound_Gain = 0;
 
-	max_barrel_gen = 2;
-	m_second = 0;
+	instances = 0;
+
+	modelCount = 0;
+	rotation_value = 0;
+
 	m_frameTime = 0;
+	m_second = 0;
 	deltaTime = 0;
 
-	spaceshipSpeed = 0.001f; // 우주선 앞뒤 이동속도
+	spaceshipSpeed = 1.0f; // 우주선 앞뒤 이동속도
 	spaceshipSideSpeed = 2.0f; // 우주선 좌우 이동 및 회전속도
 	spaceshipMaxPosX = 3.0f; // 우주선 좌우 최대 위치 (x값)
 	spaceshipMaxPosY = 0.5f; // 우주선 좌우 최대 위치 (-y값)
@@ -42,6 +47,7 @@ GraphicsClass::GraphicsClass()
 	s_trans_y = 0.0f;
 	s_rotation_y = 0.0f;
 
+	max_barrel_gen = 3; // 한번에 생성되는 최대 연료 수, min: 1, max: 3
 	barrelCount = 0;
 	for (int i = 0; i < 3; i++)
 		barrelPosNum[i] = i;
@@ -62,7 +68,11 @@ GraphicsClass::~GraphicsClass()
 
 bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 {
+	m_hwnd = hwnd;
 	bool result;
+
+	instances = new InstanceType;
+	instances->position = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 
 	D3DXMATRIX baseViewMatrix;
 
@@ -100,7 +110,7 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	}
 
 	// Initialize the model object.
-	result = m_Model_SolarSystem->Initialize(m_D3D->GetDevice(), (char*)"data/solarsystem.obj", (wchar_t*)L"data/solarsystem.png", NULL);
+	result = m_Model_SolarSystem->Initialize(m_D3D->GetDevice(), (char*)"data/solarsystem.obj", (wchar_t*)L"data/solarsystem.png", instances);
 	//	result = m_Model->Initialize(m_D3D->GetDevice(), "../Engine/data/chair.txt", L"../Engine/data/chair_d.dds");
 
 	if (!result)
@@ -118,7 +128,7 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	}
 
 	// Initialize the model object.
-	result = m_Model_Earth->Initialize(m_D3D->GetDevice(), (char *)"data/earth.obj", (wchar_t *)L"data/earth2.png", NULL);
+	result = m_Model_Earth->Initialize(m_D3D->GetDevice(), (char *)"data/earth.obj", (wchar_t *)L"data/earth2.png", instances);
 //	result = m_Model->Initialize(m_D3D->GetDevice(), "../Engine/data/chair.txt", L"../Engine/data/chair_d.dds");
 
 	if(!result)
@@ -136,7 +146,7 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	}
 
 	// Initialize the model object.
-	result = m_Model_Spaceship->Initialize(m_D3D->GetDevice(), (char*)"data/spaceship.obj", (wchar_t*)L"data/spaceship.dds", NULL);
+	result = m_Model_Spaceship->Initialize(m_D3D->GetDevice(), (char*)"data/spaceship.obj", (wchar_t*)L"data/spaceship.dds", instances);
 
 	if (!result)
 	{
@@ -153,7 +163,7 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	}
 
 	// Initialize the model object.
-	result = m_Model_Barrel->Initialize(m_D3D->GetDevice(), (char*)"data/barrel.obj", (wchar_t*)L"data/barrel.png", NULL);
+	result = m_Model_Barrel->Initialize(m_D3D->GetDevice(), (char*)"data/barrel.obj", (wchar_t*)L"data/barrel.png", instances);
 	result = ReinitializeBarrel();
 
 	if (!result)
@@ -303,6 +313,12 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 		return false;
 	}
 
+	m_Sound_Gain = new SoundClass;
+	if (!m_Sound_Gain)
+	{
+		return false;
+	}
+
 	return true;
 }
 
@@ -427,6 +443,13 @@ void GraphicsClass::Shutdown()
 		m_Text = 0;
 	}
 
+	if (m_Sound_Gain)
+	{
+		m_Sound_Gain->Shutdown();
+		delete m_Sound_Gain;
+		m_Sound_Gain = 0;
+	}
+
 	return;
 }
 
@@ -467,9 +490,11 @@ bool GraphicsClass::Frame(int fps, int cpu, float frameTime)
 
 	m_frameTime = frameTime;
 	deltaTime = (float)m_frameTime / 1000.0f;
+	float spaceshipSpeed_ = spaceshipSpeed * deltaTime;
+	rotation_value = spaceshipSpeed_ * 0.4f;
 
 	// Update the rotation variable each frame.
-	rotation += (float)D3DX_PI * 0.0005f + spaceshipSpeed;
+	rotation += rotation_value;
 	if (rotation >= 2 * D3DX_PI)
 		rotation -= 2 * D3DX_PI;
 
@@ -547,8 +572,8 @@ bool GraphicsClass::Render(float rotation)
 	static float textureSize = 0.0f;
 	static float r1 = 0.0f;
 	static float r2 = D3DX_PI / 2;
-	r1 -= (float)D3DX_PI * 0.0005f + spaceshipSpeed;
-	r2 -= (float)D3DX_PI * 0.0005f + spaceshipSpeed;
+	r1 -= rotation_value;
+	r2 -= rotation_value;
 
 
 	// Clear the buffers to begin the scene.
@@ -664,7 +689,10 @@ bool GraphicsClass::Render(float rotation)
 #pragma region Barrel Rendering
 		if (r1 < 0.0f)
 		{
-			ReinitializeBarrel();
+			result = ReinitializeBarrel();
+			if (!result)
+				return false;
+
 			r1 += D3DX_PI * 2;
 		}
 		D3DXMatrixScaling(&scaleMatrix, 1.0f, 1.0f, 1.0f);
@@ -725,11 +753,14 @@ bool GraphicsClass::Render(float rotation)
 #pragma region Fuel Bitmap
 		D3DXMatrixScaling(&scaleMatrix, 0.5f, 0.5f, 1.0f);
 
-		textureSize += sqrtf(spaceshipSpeed) * deltaTime * 0.2f;
+		textureSize += sqrtf(sqrtf(spaceshipSpeed)) * deltaTime * 0.02f;
 
 		if (r2 < 0.0f)
 		{
-			GainBarrel(textureSize);
+			result = GainBarrel(textureSize);
+			if (!result)
+				return false;
+
 			r2 += D3DX_PI * 2;
 		}
 
@@ -783,14 +814,20 @@ bool GraphicsClass::Render(float rotation)
 bool GraphicsClass::ReinitializeBarrel()
 {
 	bool result;
+	int instanceSize = sizeof(instances) / 4;
 
 	D3DXVECTOR3 leftPos = { -spaceshipMaxPosX, -spaceshipMaxPosY, 0.0f };
 	D3DXVECTOR3 middlePos = { 0.0f, 0.0f, 0.0f };
 	D3DXVECTOR3 rightPos = { spaceshipMaxPosX, -spaceshipMaxPosY, 0.0f };
 
 	// 0~2 사이의 무작위 수 만큼 배럴 생성
-	if (max_barrel_gen <= 0)
+	if (max_barrel_gen < 1 || max_barrel_gen > 3)
 		return false;
+
+	if (instanceSize == 1)
+		delete instances;
+	else if (instanceSize > 1)
+		delete[] instances;
 
 	modelCount -= barrelCount;
 
@@ -824,7 +861,7 @@ bool GraphicsClass::ReinitializeBarrel()
 	}
 
 	// Initialize the model object.
-	result = m_Model_Barrel->InitializeBuffers(m_D3D->GetDevice(), instances);
+	result = m_Model_Barrel->InitializeBuffers(m_D3D->GetDevice(), instances, barrelCount);
 
 	if (!result)
 		return false;
@@ -833,34 +870,59 @@ bool GraphicsClass::ReinitializeBarrel()
 }
 
 
-void GraphicsClass::GainBarrel(float& textureSize)
+bool GraphicsClass::RemoveBarrel(int num)
 {
+	bool result;
+
+	if (!instances)
+		return false;
+
+	instances[num].position = D3DXVECTOR3(0.0f, -9.0f, 0.0f);
+
+	result = m_Model_Barrel->InitializeBuffers(m_D3D->GetDevice(), instances, barrelCount);
+
+	if (!result)
+		return false;
+
+	return true;
+}
+
+
+bool GraphicsClass::GainBarrel(float& textureSize)
+{
+	bool result;
+	int pos = NOWHERE;
+
+	if (s_trans_x < -2.0f)
+		pos = LEFT;
+	else if (s_trans_x > -0.5f && s_trans_x < 0.5f)
+		pos = MIDDLE;
+	else if (s_trans_x > 2.0f)
+		pos = RIGHT;
+
 	for (int i = 0; i < barrelCount; i++)
 	{
-		switch (barrelPosNum[i])
+		if (barrelPosNum[i] == pos)
 		{
-		case 0:
-			if (s_trans_x < -2.0f)
-				SetFuelUp(textureSize);
-			break;
-		case 1:
-			if (s_trans_x > -0.5f && s_trans_x < 0.5f)
-				SetFuelUp(textureSize);
-			break;
-		case 2:
-			if (s_trans_x > 2.0f)
-				SetFuelUp(textureSize);
-			break;
-		default:
-			break;
+			SetFuelUp(textureSize);
+
+			result = RemoveBarrel(i);
+			if (!result)
+				return false;
+
+			result = m_Sound_Gain->Initialize(m_hwnd, (char*)"data/dada.wav");
+			if (!result)
+				return false;
 		}
 	}
+
+	return true;
 }
 
 
 void GraphicsClass::SetFuelUp(float& textureSize)
 {
-	textureSize -= 0.07f;
+	textureSize -= 0.1f;
 }
 
 
@@ -878,9 +940,14 @@ void GraphicsClass::KnuthShuffle()
 }
 
 
-void GraphicsClass::SetSpaceshipSpeed(float spaceshipSpeed)
+void GraphicsClass::ChangeSpaceshipSpeed(float change)
 {
-	this->spaceshipSpeed = spaceshipSpeed * deltaTime;
+	spaceshipSpeed += change;
+
+	if (spaceshipSpeed <= 0.2f)
+		spaceshipSpeed = 0.2f;
+	if (spaceshipSpeed >= 2.5f)
+		spaceshipSpeed = 2.5f;
 }
 
 

@@ -22,7 +22,7 @@ SoundClass::~SoundClass()
 }
 
 
-bool SoundClass::Initialize(HWND hwnd)
+bool SoundClass::Initialize(HWND hwnd, char* fileName)
 {
 	bool result;
 
@@ -35,7 +35,7 @@ bool SoundClass::Initialize(HWND hwnd)
 	}
 
 	// Load a wave audio file onto a secondary buffer.
-	result = LoadWaveFile((char *)"data/Arpent.wav", &m_secondaryBuffer1);
+	result = LoadWaveFile(fileName, &m_secondaryBuffer1);
 	if (!result)
 	{
 		return false;
@@ -331,7 +331,7 @@ bool SoundClass::PlayWaveFile()
 	}
 
 	// Set volume of the buffer to 100%.
-	result = m_secondaryBuffer1->SetVolume(DSBVOLUME_MAX);
+	result = m_secondaryBuffer1->SetVolume(-2000); // Max volume is DSBVOLUME_MAX
 	if (FAILED(result))
 	{
 		return false;
